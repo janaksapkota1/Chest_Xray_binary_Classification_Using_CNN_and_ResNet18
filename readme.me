@@ -1,0 +1,402 @@
+# Pneumonia Detection from Chest X-rays using Deep Learning
+
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Automated pneumonia detection from chest X-ray images using Convolutional Neural Networks (CNN) and Transfer Learning with ResNet-18. This project was developed as part of the NAAMII Research Assignment - Medical Imaging Track.
+
+## 📋 Overview
+
+This project implements two deep learning models for binary classification of chest X-rays:
+
+1. **Custom CNN** (605K parameters) - Lightweight architecture trained from scratch
+2. **ResNet-18** (11.7M parameters) - Transfer learning from ImageNet pre-trained weights
+
+### Key Results
+
+| Model | Balanced Accuracy | Sensitivity | Specificity | False Negatives |
+|-------|------------------|-------------|-------------|-----------------|
+| **Custom CNN** | 83.98% | 98.72% | 69.23% | 5/390 |
+| **ResNet-18** | 84.27% | 99.74% | 68.80% | 1/390 |
+
+**Highlights:**
+- 🎯 ResNet-18 achieves 99.74% pneumonia detection (only 1 missed case)
+- ⚡ Custom CNN is 19× smaller and 3× faster
+- 🔍 Grad-CAM visualizations confirm clinically relevant attention patterns
+- 📊 Comprehensive threshold optimization improves balanced accuracy by 7.27%
+
+## 🎯 Features
+
+- ✅ **Two Model Architectures**: Custom CNN and ResNet-18 with transfer learning
+- ✅ **Class Imbalance Handling**: Weighted loss functions with optimized weight factors
+- ✅ **Threshold Optimization**: Systematic calibration for optimal clinical performance
+- ✅ **Model Interpretability**: Grad-CAM visualizations showing model attention
+- ✅ **Comprehensive Evaluation**: Multiple metrics, confusion matrices, ROC curves
+- ✅ **Complete Documentation**: Detailed technical report (14 pages)
+
+## 📁 Repository Structure
+
+```
+pneumonia-detection/
+│
+├── notebooks/
+│   └── pneumonia_detection.ipynb          # Main Jupyter notebook with all code
+│
+├── reports/
+│   ├── pneumonia_detection_report.pdf     # Complete technical report (14 pages)
+│   └── pneumonia_detection_report.tex     # LaTeX source for report
+│
+├── results/
+│   ├── figures/                           # All generated visualizations
+│   │   ├── dataset_composition.png
+│   │   ├── training_history.png
+│   │   ├── confusion_matrix_optimized.png
+│   │   ├── gradcam_visualization.png
+│   │   └── ...
+│   │
+│   ├── models/                            # Saved model weights
+│   │   ├── best_pneumonia_cnn.pth
+│   │   └── ResNetCustom_best.pth
+│   │
+│   └── metrics/                           # Performance metrics
+│       ├── final_model_comparison.csv
+│       └── threshold_comparison.csv
+│
+├── requirements.txt                       # Python dependencies                    # Conda environment file (optional)
+├── README.md                             # This file                             
+└── .gitignore                           # Git ignore file
+```
+
+## 🚀 Quick Start
+
+### Option 1: Google Colab (Recommended)
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/15JPdwyW_ER0V1wpvyEKdUlewLV8R-hVt?usp=sharing/pneumonia_detection.ipynb)
+
+1. Click the badge above or open the notebook directly in Colab
+2. **Enable GPU**: Runtime → Change runtime type → Hardware accelerator → T4 GPU
+3. Run all cells (Runtime → Run all)
+4. Results will be generated in ~30-40 minutes
+
+### Option 2: Local Installation
+
+#### Prerequisites
+- Python 3.8 or higher
+- CUDA-capable GPU (recommended) or CPU
+- 8GB+ RAM
+
+#### Installation Steps
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/pneumonia-detection.git
+cd pneumonia-detection
+
+# 2. Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Run Jupyter notebook
+jupyter notebook notebooks/pneumonia_detection.ipynb
+```
+
+#### Using Conda (Alternative)
+
+```bash
+# Create conda environment
+conda env create -f environment.yml
+conda activate pneumonia-detection
+
+# Start Jupyter
+jupyter notebook notebooks/pneumonia_detection.ipynb
+```
+
+## 📊 Dataset
+
+**PneumoniaMNIST** - A standardized subset of pediatric chest X-ray images
+
+- **Total Images**: 5,856 (28×28 pixels, grayscale)
+- **Classes**: Binary (Normal / Pneumonia)
+- **Split**: 
+  - Training: 4,708 images
+  - Validation: 524 images
+  - Testing: 624 images
+- **Source**: [MedMNIST v2](https://medmnist.com/)
+
+### Automatic Download
+
+The dataset is automatically downloaded when you run the notebook using the `medmnist` library:
+
+```python
+pip install medmnist
+```
+
+No manual download required! ✨
+
+## 🏗️ Model Architectures
+
+### 1. Custom CNN
+
+**Specifications:**
+- 3 convolutional blocks (32 → 64 → 128 filters)
+- Batch normalization + Dropout regularization
+- 2-layer fully connected classifier
+- **Total Parameters**: 605,521
+- **Model Size**: 2.3 MB
+
+**Training:**
+- Trained from scratch on PneumoniaMNIST
+- 25 epochs, Adam optimizer (LR=0.001)
+- Data augmentation: flips, rotations
+- Class-weighted loss (factor=0.5)
+
+### 2. ResNet-18 (Transfer Learning)
+
+**Specifications:**
+- Pre-trained on ImageNet (1.2M images)
+- Modified final layer for binary classification
+- Input: 224×224×3 (upscaled from 28×28×1)
+- **Total Parameters**: 11,689,512
+- **Model Size**: 44.7 MB
+
+**Training Strategy:**
+- **Stage 1 (10 epochs)**: Train only final layer, freeze backbone
+- **Stage 2 (15 epochs)**: Fine-tune entire network (LR=0.0001)
+
+## 📈 Training Process
+
+### Data Preprocessing
+```python
+# Training augmentation
+- RandomHorizontalFlip(p=0.5)
+- RandomRotation(±10°)
+- Normalization(mean=0.5, std=0.5)
+
+# Validation/Test
+- Normalization only
+```
+
+### Class Imbalance Handling
+```python
+# Weighted BCE Loss
+weight_factor = 0.5
+pos_weight = (n_normal / n_pneumonia) × weight_factor
+criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+```
+
+### Threshold Optimization
+Systematic evaluation of thresholds (0.30-0.80) to maximize balanced accuracy:
+- **Custom CNN**: Optimal threshold = 0.75 (+7.27% improvement)
+- **ResNet-18**: Well-calibrated at 0.50 (default)
+
+## 🔍 Model Interpretability
+
+### Grad-CAM Visualizations
+
+Gradient-weighted Class Activation Mapping (Grad-CAM) reveals which regions the models focus on:
+
+**Key Findings:**
+- ✅ Both models focus on lung parenchyma (clinically appropriate)
+- ✅ Strong activation on infiltrate/consolidation areas
+- ✅ Lower lung field sensitivity (common pneumonia location)
+- ✅ Minimal false activation on anatomical landmarks
+
+**Example Output:**
+- Row 1: Original X-ray images
+- Row 2: Grad-CAM heatmap overlays (red = high attention)
+- Row 3: Isolated heatmaps with confidence scores
+
+## 📊 Evaluation Metrics
+
+### Comprehensive Performance
+
+Both models evaluated on:
+- Accuracy, Precision, Recall (Sensitivity)
+- Specificity, F1-Score, AUC-ROC
+- Balanced Accuracy (accounts for class imbalance)
+- Confusion matrices
+- Per-class accuracies
+- False negative/positive analysis
+
+### Confusion Matrices
+
+**Custom CNN (threshold=0.75):**
+```
+                Predicted
+              Normal  Pneumonia
+Actual Normal   162      72      
+    Pneumonia     5     385      
+```
+
+**ResNet-18 (threshold=0.50):**
+```
+                Predicted
+              Normal  Pneumonia
+Actual Normal   161      73      
+    Pneumonia     1     389      
+```
+
+## 🎯 Key Findings
+
+### 1. Transfer Learning Effectiveness
+ResNet-18's ImageNet pre-training provides meaningful initialization even for 28×28 medical images, improving performance by 0.29% balanced accuracy.
+
+### 2. Threshold Optimization Critical
+Default threshold (0.5) unsuitable for imbalanced data. Optimization improved Custom CNN from 76.71% to 83.98% balanced accuracy.
+
+### 3. Parameter Efficiency
+Custom CNN achieves 83.98% balanced accuracy with 19× fewer parameters than ResNet-18 (84.27%), demonstrating strong parameter efficiency.
+
+### 4. Clinical Safety
+ResNet-18 misses only 1 pneumonia case (0.26% miss rate) vs. 5 for Custom CNN (1.28%), representing 80% reduction in most critical error type.
+
+### 5. Deployment Trade-offs
+- **ResNet-18**: Best for safety-critical hospital deployment
+- **Custom CNN**: Ideal for mobile/edge devices, field clinics
+
+## 🔬 Ablation Studies
+
+Experiments conducted to understand component contributions:
+
+| Component | Impact on Balanced Accuracy |
+|-----------|----------------------------|
+| Class weighting (factor=0.5) | +5.82% |
+| Data augmentation | +4.81% |
+| Threshold optimization (0.75) | +7.27% |
+| Batch normalization | +3.14% |
+| Transfer learning (ResNet-18) | +0.29% |
+
+## 📖 Usage Examples
+
+### Training Custom CNN
+
+```python
+from notebooks.pneumonia_detection import PneumoniaCNN, train_model
+
+# Initialize model
+model = PneumoniaCNN(in_channels=1, num_classes=1).to(device)
+
+# Train with class weights
+history = train_model(
+    model, 
+    train_loader, 
+    val_loader, 
+    num_epochs=25, 
+    lr=0.001,
+    use_class_weights=True,
+    weight_factor=0.5
+)
+```
+
+### Inference
+
+```python
+import torch
+from PIL import Image
+
+# Load trained model
+model = PneumoniaCNN()
+model.load_state_dict(torch.load('best_pneumonia_cnn.pth'))
+model.eval()
+
+# Predict on new image
+image = preprocess(Image.open('chest_xray.png'))
+with torch.no_grad():
+    output = model(image.unsqueeze(0))
+    probability = torch.sigmoid(output).item()
+    prediction = "Pneumonia" if probability > 0.75 else "Normal"
+    
+print(f"Prediction: {prediction} (Confidence: {probability:.2%})")
+```
+
+### Generate Grad-CAM
+
+```python
+from notebooks.pneumonia_detection import GradCAM
+
+# Initialize Grad-CAM
+gradcam = GradCAM(model, target_layer=model.features[-3])
+
+# Generate visualization
+cam = gradcam.generate_cam(image.unsqueeze(0))
+visualize_gradcam(image, cam, prediction)
+```
+
+## 🎓 Citation
+
+If you use this code or findings in your research, please cite:
+
+```bibtex
+@misc{pneumonia_detection_2025,
+  author = {Janak Sapkota},
+  title = {Pneumonia Detection from Chest X-rays using Deep Learning},
+  year = {2025},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/janaksapkota1/Chest_Xray_binary_Classification_Using_CNN_and_ResNet18}}
+}
+```
+
+## 📄 Technical Report
+
+Detailed 14-page technical report available in `reports/pneumonia_detection_report.pdf` covering:
+- Dataset analysis and class imbalance handling
+- Model architecture design rationale
+- Training methodology and hyperparameters
+- Comprehensive evaluation with multiple metrics
+- Grad-CAM interpretability analysis
+- Ablation studies and additional discoveries
+- Clinical deployment recommendations
+
+## 🛠️ Requirements
+
+### Core Dependencies
+- Python >= 3.8
+- PyTorch >= 2.0
+- torchvision >= 0.15
+- medmnist >= 2.2
+- numpy >= 1.21
+- pandas >= 1.3
+- matplotlib >= 3.4
+- seaborn >= 0.11
+- scikit-learn >= 1.0
+- opencv-python >= 4.5
+- tqdm >= 4.62
+
+Full requirements in `requirements.txt`
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📧 Contact
+
+**Your Name** - janaksapkota65@gmail.com
+
+Project Link: [https://github.com/janaksapkota1/Chest_Xray_binary_Classification_Using_CNN_and_ResNet18](https://github.com/janaksapkota1/Chest_Xray_binary_Classification_Using_CNN_and_ResNet18)
+
+## 🙏 Acknowledgments
+
+- **NAAMII** for providing the research assignment opportunity
+- **MedMNIST** team for the standardized dataset
+- **PyTorch** and **torchvision** communities
+- Original chest X-ray dataset from Kermany et al. (2018)
+
+
+## ⚠️ Disclaimer
+
+**This model is for research and educational purposes only.** It should not be used as a sole diagnostic tool. Always consult qualified healthcare professionals for medical diagnosis and treatment decisions. The models require validation on external datasets and clinical settings before any real-world deployment.
+
+---
+
+**Star ⭐ this repository if you find it helpful!**
